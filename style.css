@@ -15,6 +15,7 @@ body {
 }
 .menu-button {
     padding: 5px 10px;
+    cursor: pointer;
 }
 .main-content {
     display: flex;
@@ -45,19 +46,26 @@ body {
     font-size: 14px;
     line-height: 1.2;
     padding: 5px;
+    position: relative;
 }
-
-.square-table {
-    /* Existing table-icon styles are sufficient */
-}
-
 .rectangular-table {
     width: 100px;
     height: 60px;
 }
-
 .circular-table {
     border-radius: 50%;
+}
+.placed {
+    position: relative;
+}
+.resize-handle {
+    width: 10px;
+    height: 10px;
+    background-color: #666;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    cursor: se-resize;
 }
 
 .restaurant-name-container {

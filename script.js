@@ -45,6 +45,13 @@ document.addEventListener('DOMContentLoaded', (event) => {
             newTable.style.left = `${e.clientX - layoutArea.getBoundingClientRect().left}px`;
             newTable.style.top = `${e.clientY - layoutArea.getBoundingClientRect().top}px`;
             
+            // Add resize handle
+            const resizeHandle = document.createElement('div');
+            resizeHandle.className = 'resize-handle';
+            newTable.appendChild(resizeHandle);
+            
+            newTable.classList.add('placed');
+            
             layoutArea.appendChild(newTable);
             draggedElement = null;
         }
@@ -54,9 +61,42 @@ document.addEventListener('DOMContentLoaded', (event) => {
     layoutArea.addEventListener('mousedown', (e) => {
         const tableElement = e.target.closest('.table-icon');
         if (tableElement && tableElement.parentElement === layoutArea) {
-            dragElement(tableElement, e);
+            if (e.target.classList.contains('resize-handle')) {
+                resizeElement(tableElement, e);
+            } else {
+                dragElement(tableElement, e);
+            }
         }
     });
+
+    function resizeElement(element, startEvent) {
+        startEvent.preventDefault();
+        const startX = startEvent.clientX;
+        const startY = startEvent.clientY;
+        const startWidth = element.offsetWidth;
+        const startHeight = element.offsetHeight;
+
+        document.onmousemove = resize;
+        document.onmouseup = stopResize;
+
+        function resize(e) {
+            const newWidth = startWidth + e.clientX - startX;
+            const newHeight = startHeight + e.clientY - startY;
+            
+            // Ensure minimum size and stay within layout area
+            if (newWidth >= 50 && newHeight >= 50 &&
+                element.offsetLeft + newWidth <= layoutArea.offsetWidth &&
+                element.offsetTop + newHeight <= layoutArea.offsetHeight) {
+                element.style.width = `${newWidth}px`;
+                element.style.height = `${newHeight}px`;
+            }
+        }
+
+        function stopResize() {
+            document.onmousemove = null;
+            document.onmouseup = null;
+        }
+    }
 
     function dragElement(element, startEvent) {
         startEvent.preventDefault();
