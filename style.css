@@ -1,0 +1,69 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 17px;
+    background-color: #f0f0f0;
+}
+#restaurant-name {
+    font-size: 24px;
+    font-weight: bold;
+}
+.menu-button {
+    padding: 5px 10px;
+}
+.main-content {
+    display: flex;
+    height: calc(100vh - 50px);
+}
+.sidebar {
+    width: 100px;
+    background-color: #e0e0e0;
+    padding: 16px;
+    text-align: center;
+}
+.layout-area {
+    flex-grow: 1;
+    background-color: white;
+}
+.table-icon {
+    width: 80px;
+    height: 80px;
+    background-color: #ccc;
+    margin: 10px auto;
+    cursor: move;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.2;
+    padding: 5px;
+}
+
+.square-table {
+    /* Existing table-icon styles are sufficient */
+}
+
+.rectangular-table {
+    width: 100px;
+    height: 60px;
+}
+
+.circular-table {
+    border-radius: 50%;
+}
+
+.restaurant-name-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+.edit-icon {
+    margin-left: 10px;
+    font-size: 18px;
+}

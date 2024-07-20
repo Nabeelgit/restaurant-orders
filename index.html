@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Layout</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <nav class="navbar">
+        <div></div>
+        <div class="restaurant-name-container" onclick="editRestaurantName()">
+            <span id="restaurant-name">Restaurant Name</span>
+            <span class="edit-icon"><i class="fa-solid fa-pen"></i></span>
+        </div>
+        <button class="menu-button">Menu</button>
+    </nav>
+    <div class="main-content">
+        <div class="sidebar">
+            <div class="table-icon square-table" draggable="true">
+                <span>Square table</span>
+            </div>
+            <div class="table-icon rectangular-table" draggable="true">
+                <span>Rectangular table</span>
+            </div>
+            <div class="table-icon circular-table" draggable="true">
+                <span>Circular table</span>
+            </div>
+        </div>
+        <div class="layout-area"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
