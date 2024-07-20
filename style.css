@@ -29,6 +29,8 @@ body {
 .layout-area {
     flex-grow: 1;
     background-color: white;
+    position: relative;
+    overflow: hidden;
 }
 .table-icon {
     width: 80px;
