@@ -67,6 +67,22 @@ body {
     bottom: 0;
     cursor: se-resize;
 }
+.table-name {
+    position: absolute;
+    top: -25px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    background: none;
+    border: none;
+    outline: none;
+}
+
+.table-name:focus {
+    background: white;
+    border: 1px solid #ccc;
+}
 
 .restaurant-name-container {
     display: flex;
@@ -76,4 +92,36 @@ body {
 .edit-icon {
     margin-left: 10px;
     font-size: 18px;
+}
+
+/* Add these new styles to your existing CSS */
+.context-menu {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 5px 0;
+    z-index: 1000;
+}
+
+.context-menu button {
+    display: block;
+    width: 100%;
+    padding: 5px 10px;
+    text-align: left;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.context-menu button:hover {
+    background-color: #f0f0f0;
+}
+
+.table-icon.occupied {
+    background-color: #90EE90; /* Light green */
+}
+
+.table-icon:not(.occupied) {
+    background-color: #932f2f; /* Light red */
+    color: white;
 }

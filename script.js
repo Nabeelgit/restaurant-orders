@@ -50,7 +50,16 @@ document.addEventListener('DOMContentLoaded', (event) => {
             resizeHandle.className = 'resize-handle';
             newTable.appendChild(resizeHandle);
             
+            // Add name input
+            const nameInput = document.createElement('input');
+            nameInput.type = 'text';
+            nameInput.className = 'table-name';
+            nameInput.value = `Table ${layoutArea.children.length + 1}`;
+            nameInput.addEventListener('click', (e) => e.stopPropagation());
+            newTable.appendChild(nameInput);
+            
             newTable.classList.add('placed');
+            newTable.classList.add('occupied'); // Start as occupied (green)
             
             layoutArea.appendChild(newTable);
             draggedElement = null;
@@ -63,6 +72,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
         if (tableElement && tableElement.parentElement === layoutArea) {
             if (e.target.classList.contains('resize-handle')) {
                 resizeElement(tableElement, e);
+            } else if (e.target.classList.contains('table-name')) {
+                return; // Don't start dragging if clicking on the name input
             } else {
                 dragElement(tableElement, e);
             }
@@ -125,4 +136,53 @@ document.addEventListener('DOMContentLoaded', (event) => {
             document.onmouseup = null;
         }
     }
+
+    let contextMenu = null;
+
+    // Create context menu
+    function createContextMenu(x, y, table) {
+        // Remove existing context menu if any
+        if (contextMenu) {
+            contextMenu.remove();
+        }
+
+        contextMenu = document.createElement('div');
+        contextMenu.className = 'context-menu';
+        contextMenu.style.left = `${x}px`;
+        contextMenu.style.top = `${y}px`;
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.onclick = () => {
+            table.remove();
+            contextMenu.remove();
+        };
+
+        const occupiedButton = document.createElement('button');
+        occupiedButton.textContent = table.classList.contains('occupied') ? 'Mark as Unoccupied' : 'Mark as Occupied';
+        occupiedButton.onclick = () => {
+            table.classList.toggle('occupied');
+            contextMenu.remove();
+        };
+
+        contextMenu.appendChild(deleteButton);
+        contextMenu.appendChild(occupiedButton);
+        document.body.appendChild(contextMenu);
+    }
+
+    // Handle right-click on tables
+    layoutArea.addEventListener('contextmenu', (e) => {
+        const tableElement = e.target.closest('.table-icon');
+        if (tableElement && tableElement.parentElement === layoutArea) {
+            e.preventDefault();
+            createContextMenu(e.clientX, e.clientY, tableElement);
+        }
+    });
+
+    // Close context menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (contextMenu && !contextMenu.contains(e.target)) {
+            contextMenu.remove();
+        }
+    });
 });
