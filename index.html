@@ -30,6 +30,35 @@
         </div>
         <div class="layout-area"></div>
     </div>
+    <div id="menuModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalRestaurantName"></h2>
+                <button id="addItemButton">Add Item</button>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Menu items will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+    <div id="addItemModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Menu Item</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addItemForm">
+                    <input type="file" id="itemImage" accept="image/*" required>
+                    <input type="text" id="itemName" placeholder="Item Name" required>
+                    <textarea id="itemDescription" placeholder="Item Description" required></textarea>
+                    <input type="number" id="itemPrice" placeholder="Price" step="0.01" min="0" required>
+                    <button type="submit">Add Item</button>
+                </form>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>

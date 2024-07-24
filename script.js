@@ -110,6 +110,10 @@ document.addEventListener('DOMContentLoaded', (event) => {
     }
 
     function dragElement(element, startEvent) {
+        if (startEvent.target.classList.contains('table-name')) {
+            return; // Don't start dragging if clicking on the name input
+        }
+        
         startEvent.preventDefault();
         const rect = element.getBoundingClientRect();
         const offsetX = startEvent.clientX - rect.left;
@@ -120,20 +124,50 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
         function elementDrag(e) {
             e.preventDefault();
-            const newLeft = e.clientX - offsetX - layoutArea.getBoundingClientRect().left;
-            const newTop = e.clientY - offsetY - layoutArea.getBoundingClientRect().top;
+            const newLeft = e.clientX - offsetX;
+            const newTop = e.clientY - offsetY;
 
-            // Ensure the table stays within the layout area
-            if (newTop >= 0 && newTop + element.offsetHeight <= layoutArea.offsetHeight &&
-                newLeft >= 0 && newLeft + element.offsetWidth <= layoutArea.offsetWidth) {
-                element.style.left = `${newLeft}px`;
-                element.style.top = `${newTop}px`;
+            // Allow the table to be dragged anywhere on the screen
+            element.style.left = `${newLeft}px`;
+            element.style.top = `${newTop}px`;
+
+            // Check if the table is over the sidebar
+            const sidebarRect = sidebar.getBoundingClientRect();
+            if (e.clientX >= sidebarRect.left && e.clientX <= sidebarRect.right &&
+                e.clientY >= sidebarRect.top && e.clientY <= sidebarRect.bottom) {
+                sidebar.classList.add('delete-hover');
+                element.classList.add('delete-hover');
+            } else {
+                sidebar.classList.remove('delete-hover');
+                element.classList.remove('delete-hover');
             }
         }
 
-        function closeDragElement() {
+        function closeDragElement(e) {
             document.onmousemove = null;
             document.onmouseup = null;
+
+            // Remove hover classes
+            sidebar.classList.remove('delete-hover');
+            element.classList.remove('delete-hover');
+
+            // Check if the table is dropped in the sidebar
+            const sidebarRect = sidebar.getBoundingClientRect();
+            if (e.clientX >= sidebarRect.left && e.clientX <= sidebarRect.right &&
+                e.clientY >= sidebarRect.top && e.clientY <= sidebarRect.bottom) {
+                element.remove(); // Delete the table
+            } else if (e.clientX >= layoutArea.offsetLeft && 
+                       e.clientX <= layoutArea.offsetLeft + layoutArea.offsetWidth &&
+                       e.clientY >= layoutArea.offsetTop && 
+                       e.clientY <= layoutArea.offsetTop + layoutArea.offsetHeight) {
+                // If dropped within layout area, adjust position relative to layout area
+                element.style.left = `${e.clientX - layoutArea.offsetLeft - offsetX}px`;
+                element.style.top = `${e.clientY - layoutArea.offsetTop - offsetY}px`;
+            } else {
+                // If dropped outside layout area and sidebar, return to original position
+                element.style.left = `${rect.left - layoutArea.offsetLeft}px`;
+                element.style.top = `${rect.top - layoutArea.offsetTop}px`;
+            }
         }
     }
 
@@ -185,4 +219,127 @@ document.addEventListener('DOMContentLoaded', (event) => {
             contextMenu.remove();
         }
     });
+
+    // Allow dropping in sidebar for deletion
+    sidebar.addEventListener('dragover', (e) => {
+        e.preventDefault();
+    });
+
+    sidebar.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (draggedElement && draggedElement.classList.contains('placed')) {
+            draggedElement.remove();
+        }
+    });
+
+    const menuButton = document.querySelector('.menu-button');
+    const menuModal = document.getElementById('menuModal');
+    const modalRestaurantName = document.getElementById('modalRestaurantName');
+    const closeButton = menuModal.querySelector('.close');
+    const addItemButton = document.getElementById('addItemButton');
+    const addItemModal = document.getElementById('addItemModal');
+    const addItemForm = document.getElementById('addItemForm');
+    const menuItemsContainer = document.querySelector('.modal-body');
+
+    let menuItems = JSON.parse(localStorage.getItem('menuItems')) || [];
+    if (!Array.isArray(menuItems)) {
+        menuItems = [];
+        localStorage.setItem('menuItems', JSON.stringify(menuItems));
+    }
+
+    function displayMenuItems() {
+        menuItemsContainer.innerHTML = '';
+        menuItems.forEach((item, index) => {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'menu-item';
+            itemElement.innerHTML = `
+                <img src="${item.image}" alt="${item.name || 'Unknown item'}">
+                <div class="menu-item-details">
+                    <div class="menu-item-name">${item.name || 'Unknown item'}</div>
+                    <div class="menu-item-description">${item.description || 'No description available'}</div>
+                </div>
+                <div class="menu-item-price">$${(item.price != null && !isNaN(item.price)) ? item.price.toFixed(2) : '0.00'}</div>
+                <button class="delete-item" data-index="${index}">Delete</button>
+            `;
+            menuItemsContainer.appendChild(itemElement);
+        });
+
+        // Add event listeners for delete buttons
+        document.querySelectorAll('.delete-item').forEach(button => {
+            button.addEventListener('click', deleteMenuItem);
+        });
+    }
+
+    function deleteMenuItem(event) {
+        const index = parseInt(event.target.getAttribute('data-index'));
+        if (!isNaN(index) && index >= 0 && index < menuItems.length) {
+            menuItems.splice(index, 1);
+            localStorage.setItem('menuItems', JSON.stringify(menuItems));
+            displayMenuItems();
+        }
+    }
+
+    // Open the menu modal
+    menuButton.addEventListener('click', () => {
+        menuModal.style.display = 'block';
+        modalRestaurantName.textContent = document.getElementById('restaurant-name').textContent;
+        displayMenuItems();
+    });
+
+    // Close the menu modal
+    closeButton.addEventListener('click', () => {
+        menuModal.style.display = 'none';
+    });
+
+    // Open the add item modal
+    addItemButton.addEventListener('click', () => {
+        addItemModal.style.display = 'block';
+    });
+
+    // Close the add item modal
+    addItemModal.querySelector('.close').addEventListener('click', () => {
+        addItemModal.style.display = 'none';
+    });
+
+    // Handle form submission
+    addItemForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const file = document.getElementById('itemImage').files[0];
+        
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const newItem = {
+                    image: event.target.result,
+                    name: document.getElementById('itemName').value.trim() || 'Unknown item',
+                    description: document.getElementById('itemDescription').value.trim() || 'No description available',
+                    price: parseFloat(document.getElementById('itemPrice').value) || 0
+                };
+
+                menuItems.push(newItem);
+                localStorage.setItem('menuItems', JSON.stringify(menuItems));
+                displayMenuItems();
+                addItemModal.style.display = 'none';
+                addItemForm.reset();
+            };
+
+            reader.readAsDataURL(file);
+        } else {
+            alert('Please select an image file.');
+        }
+    });
+
+    // Close modals when clicking outside
+    window.addEventListener('click', (event) => {
+        if (event.target === menuModal) {
+            menuModal.style.display = 'none';
+        }
+        if (event.target === addItemModal) {
+            addItemModal.style.display = 'none';
+        }
+    });
+
+    // Display menu items on page load
+    displayMenuItems();
 });
