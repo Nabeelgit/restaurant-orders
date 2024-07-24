@@ -77,7 +77,6 @@ document.addEventListener('DOMContentLoaded', (event) => {
             newTable.appendChild(ellipsisMenu);
             
             newTable.classList.add('placed');
-            newTable.classList.add('occupied'); // Start as occupied (green)
             
             layoutArea.appendChild(newTable);
             draggedElement = null;
