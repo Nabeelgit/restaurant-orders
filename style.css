@@ -192,12 +192,12 @@ body {
 }
 
 .menu-item {
+    position: relative;
     display: flex;
     align-items: center;
     margin-bottom: 10px;
     padding: 10px;
     border: 1px solid #ddd;
-    position: relative;
 }
 
 .menu-item img {
@@ -222,7 +222,7 @@ body {
 
 .delete-item {
     position: absolute;
-    top: 1px;
+    top: 5px;
     right: 5px;
     background-color: #ff4d4d;
     color: white;
@@ -234,4 +234,69 @@ body {
 
 .delete-item:hover {
     background-color: #ff1a1a;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 5px;
+    border: 1px solid #ddd;
+}
+
+.order-item button {
+    margin-left: 5px;
+}
+
+#addToOrderButton {
+    margin-top: 10px;
+}
+
+.menu-items-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+.menu-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    margin-right: 10px;
+}
+
+.menu-item-details {
+    flex-grow: 1;
+}
+
+.menu-item-name {
+    font-weight: bold;
+}
+
+.menu-item-price {
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+.menu-item-actions {
+    display: flex;
+    align-items: center;
+}
+
+.item-quantity {
+    width: 50px;
+    margin-right: 5px;
+}
+
+.add-to-order {
+    padding: 5px 10px;
+    cursor: pointer;
 }

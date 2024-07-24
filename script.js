@@ -18,10 +18,20 @@ function loadRestaurantName() {
 
 // Call loadRestaurantName when the DOM content is loaded
 document.addEventListener('DOMContentLoaded', (event) => {
+    // Create modal container
+    const modalContainer = document.createElement('div');
+    modalContainer.id = 'modalContainer';
+    document.body.appendChild(modalContainer);
+
+    // Declare layoutArea once
+    const layoutArea = document.querySelector('.layout-area');
+    if (!layoutArea) {
+        return;
+    }
+
     loadRestaurantName();
     
     const sidebar = document.querySelector('.sidebar');
-    const layoutArea = document.querySelector('.layout-area');
     let draggedElement = null;
 
     // Make sidebar items draggable
@@ -199,8 +209,16 @@ document.addEventListener('DOMContentLoaded', (event) => {
             contextMenu.remove();
         };
 
+        const orderButton = document.createElement('button');
+        orderButton.textContent = 'Order';
+        orderButton.onclick = () => {
+            showOrderModal(table);
+            contextMenu.remove();
+        };
+
         contextMenu.appendChild(deleteButton);
         contextMenu.appendChild(occupiedButton);
+        contextMenu.appendChild(orderButton);
         document.body.appendChild(contextMenu);
     }
 
@@ -342,4 +360,154 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
     // Display menu items on page load
     displayMenuItems();
+
+    // Order modal
+    function showOrderModal(table) {
+        const modalContainer = document.getElementById('modalContainer');
+        if (!modalContainer) {
+            return;
+        }
+
+        const orderModal = document.createElement('div');
+        orderModal.className = 'modal';
+        orderModal.style.display = 'block';
+        orderModal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Order for ${table.querySelector('.table-name') ? table.querySelector('.table-name').value : 'Table'}</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="order-items"></div>
+                    <button id="addToOrderButton">Add Item</button>
+                </div>
+            </div>
+        `;
+        modalContainer.appendChild(orderModal);
+
+        const closeButton = orderModal.querySelector('.close');
+        closeButton.onclick = () => orderModal.remove();
+
+        const addToOrderButton = orderModal.querySelector('#addToOrderButton');
+        addToOrderButton.onclick = () => showAddToOrderModal(table, orderModal);
+
+        displayOrderItems(table, orderModal);
+    }
+
+    function showAddToOrderModal(table, orderModal) {
+        const modalContainer = document.getElementById('modalContainer');
+        const addToOrderModal = document.createElement('div');
+        addToOrderModal.className = 'modal';
+        addToOrderModal.style.display = 'block';
+        addToOrderModal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Add to Order</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="menu-items-container"></div>
+                </div>
+            </div>
+        `;
+        modalContainer.appendChild(addToOrderModal);
+
+        const closeButton = addToOrderModal.querySelector('.close');
+        closeButton.onclick = () => addToOrderModal.remove();
+
+        const menuItemsContainer = addToOrderModal.querySelector('.menu-items-container');
+        menuItems.forEach(item => {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'menu-item';
+            itemElement.innerHTML = `
+                <img src="${item.image}" alt="${item.name || 'Unknown item'}">
+                <div class="menu-item-details">
+                    <div class="menu-item-name">${item.name || 'Unknown item'}</div>
+                    <div class="menu-item-description">${item.description || 'No description available'}</div>
+                    <div class="menu-item-price">$${(item.price != null && !isNaN(item.price)) ? item.price.toFixed(2) : '0.00'}</div>
+                </div>
+                <div class="menu-item-actions">
+                    <input type="number" class="item-quantity" value="1" min="1">
+                    <button class="add-to-order" data-item-name="${item.name}">Add</button>
+                </div>
+            `;
+            menuItemsContainer.appendChild(itemElement);
+        });
+
+        // Add event listeners for "Add" buttons
+        addToOrderModal.querySelectorAll('.add-to-order').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const itemName = e.target.getAttribute('data-item-name');
+                const quantity = parseInt(e.target.parentElement.querySelector('.item-quantity').value);
+                addItemToOrder(table, itemName, quantity);
+                displayOrderItems(table, orderModal);
+                addToOrderModal.remove();
+            });
+        });
+    }
+
+    function addItemToOrder(table, itemName, quantity) {
+        if (!table.order) {
+            table.order = [];
+        }
+        const existingItem = table.order.find(item => item.name === itemName);
+        if (existingItem) {
+            existingItem.quantity += quantity;
+        } else {
+            const menuItem = menuItems.find(item => item.name === itemName);
+            table.order.push({ name: itemName, price: menuItem.price, quantity: quantity });
+        }
+    }
+
+    function displayOrderItems(table, orderModal) {
+        const orderItemsContainer = orderModal.querySelector('.order-items');
+        orderItemsContainer.innerHTML = '';
+        if (table.order && table.order.length > 0) {
+            table.order.forEach((item, index) => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'order-item';
+                itemElement.innerHTML = `
+                    <span>${item.name} - $${item.price.toFixed(2)} x ${item.quantity}</span>
+                    <button class="edit-quantity" data-index="${index}">Edit</button>
+                    <button class="delete-order-item" data-index="${index}">Delete</button>
+                `;
+                orderItemsContainer.appendChild(itemElement);
+            });
+
+            // Add event listeners for edit and delete buttons
+            orderItemsContainer.querySelectorAll('.edit-quantity').forEach(button => {
+                button.addEventListener('click', (e) => editOrderItemQuantity(e, table, orderModal));
+            });
+            orderItemsContainer.querySelectorAll('.delete-order-item').forEach(button => {
+                button.addEventListener('click', (e) => deleteOrderItem(e, table, orderModal));
+            });
+        } else {
+            orderItemsContainer.innerHTML = '<p>No items in the order.</p>';
+        }
+    }
+
+    function editOrderItemQuantity(event, table, orderModal) {
+        const index = parseInt(event.target.getAttribute('data-index'));
+        const item = table.order[index];
+        const newQuantity = prompt(`Enter new quantity for ${item.name}:`, item.quantity);
+        if (newQuantity !== null && !isNaN(newQuantity) && newQuantity > 0) {
+            item.quantity = parseInt(newQuantity);
+            displayOrderItems(table, orderModal);
+        }
+    }
+
+    function deleteOrderItem(event, table, orderModal) {
+        const index = parseInt(event.target.getAttribute('data-index'));
+        table.order.splice(index, 1);
+        displayOrderItems(table, orderModal);
+    }
+
+    // Make sure this event listener is inside the DOMContentLoaded event
+    layoutArea.addEventListener('contextmenu', (e) => {
+        const tableElement = e.target.closest('.table-icon');
+        if (tableElement && tableElement.parentElement === layoutArea) {
+            e.preventDefault();
+            createContextMenu(e.clientX, e.clientY, tableElement);
+        }
+    });
 });
