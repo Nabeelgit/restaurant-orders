@@ -61,7 +61,7 @@ body {
     border-radius: 50%;
 }
 .placed {
-    position: relative;
+    position: absolute;
 }
 .resize-handle {
     width: 10px;
@@ -101,17 +101,17 @@ body {
 
 /* Add these new styles to your existing CSS */
 .context-menu {
-    position: absolute;
-    background-color: white;
+    position: fixed;
+    background: white;
     border: 1px solid #ccc;
-    padding: 5px 0;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
     z-index: 1000;
 }
 
 .context-menu button {
     display: block;
     width: 100%;
-    padding: 5px 10px;
+    padding: 8px 10px;
     text-align: left;
     border: none;
     background: none;
@@ -299,4 +299,26 @@ body {
 .add-to-order {
     padding: 5px 10px;
     cursor: pointer;
+}
+
+.table-icon.placed {
+    position: absolute;
+    cursor: move;
+}
+
+.layout-area {
+    position: relative;
+}
+.ellipsis-menu {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    z-index: 10;
+}
+
+.table-icon {
+    position: relative;
 }

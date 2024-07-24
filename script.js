@@ -52,8 +52,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
         if (draggedElement) {
             const newTable = draggedElement.cloneNode(true);
             newTable.style.position = 'absolute';
-            newTable.style.left = `${e.clientX - layoutArea.getBoundingClientRect().left}px`;
-            newTable.style.top = `${e.clientY - layoutArea.getBoundingClientRect().top}px`;
+            const layoutRect = layoutArea.getBoundingClientRect();
+            newTable.style.left = `${e.clientX - layoutRect.left - newTable.offsetWidth / 2}px`;
+            newTable.style.top = `${e.clientY - layoutRect.top - newTable.offsetHeight / 2}px`;
             
             // Add resize handle
             const resizeHandle = document.createElement('div');
@@ -68,11 +69,21 @@ document.addEventListener('DOMContentLoaded', (event) => {
             nameInput.addEventListener('click', (e) => e.stopPropagation());
             newTable.appendChild(nameInput);
             
+            // Add ellipsis menu
+            const ellipsisMenu = document.createElement('div');
+            ellipsisMenu.className = 'ellipsis-menu';
+            ellipsisMenu.textContent = '⋮';
+            ellipsisMenu.dataset.tableId = Date.now();
+            newTable.appendChild(ellipsisMenu);
+            
             newTable.classList.add('placed');
             newTable.classList.add('occupied'); // Start as occupied (green)
             
             layoutArea.appendChild(newTable);
             draggedElement = null;
+
+            // Apply dragging functionality to the new table
+            dragElement(newTable);
         }
     });
 
@@ -84,8 +95,8 @@ document.addEventListener('DOMContentLoaded', (event) => {
                 resizeElement(tableElement, e);
             } else if (e.target.classList.contains('table-name')) {
                 return; // Don't start dragging if clicking on the name input
-            } else {
-                dragElement(tableElement, e);
+            } else if (!e.target.classList.contains('ellipsis-menu')) {
+                dragElement(tableElement);
             }
         }
     });
@@ -119,65 +130,47 @@ document.addEventListener('DOMContentLoaded', (event) => {
         }
     }
 
-    function dragElement(element, startEvent) {
-        if (startEvent.target.classList.contains('table-name')) {
-            return; // Don't start dragging if clicking on the name input
-        }
+    function dragElement(element) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        const layoutArea = document.querySelector('.layout-area');
         
-        startEvent.preventDefault();
-        const rect = element.getBoundingClientRect();
-        const offsetX = startEvent.clientX - rect.left;
-        const offsetY = startEvent.clientY - rect.top;
+        element.onmousedown = dragMouseDown;
 
-        document.onmousemove = elementDrag;
-        document.onmouseup = closeDragElement;
+        function dragMouseDown(e) {
+            if (e.target.classList.contains('table-name') || e.target.classList.contains('ellipsis-menu')) {
+                return; // Don't start dragging if clicking on the name input or ellipsis menu
+            }
+            e = e || window.event;
+            e.preventDefault();
+            // Get the mouse cursor position at startup
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+        }
 
         function elementDrag(e) {
+            e = e || window.event;
             e.preventDefault();
-            const newLeft = e.clientX - offsetX;
-            const newTop = e.clientY - offsetY;
-
-            // Allow the table to be dragged anywhere on the screen
-            element.style.left = `${newLeft}px`;
-            element.style.top = `${newTop}px`;
-
-            // Check if the table is over the sidebar
-            const sidebarRect = sidebar.getBoundingClientRect();
-            if (e.clientX >= sidebarRect.left && e.clientX <= sidebarRect.right &&
-                e.clientY >= sidebarRect.top && e.clientY <= sidebarRect.bottom) {
-                sidebar.classList.add('delete-hover');
-                element.classList.add('delete-hover');
-            } else {
-                sidebar.classList.remove('delete-hover');
-                element.classList.remove('delete-hover');
-            }
+            // Calculate the new cursor position
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            
+            // Calculate new position relative to layout area
+            const layoutRect = layoutArea.getBoundingClientRect();
+            const newTop = e.clientY - layoutRect.top - element.offsetHeight / 2;
+            const newLeft = e.clientX - layoutRect.left - element.offsetWidth / 2;
+            
+            // Set the element's new position
+            element.style.top = `${Math.max(0, Math.min(newTop, layoutArea.offsetHeight - element.offsetHeight))}px`;
+            element.style.left = `${Math.max(0, Math.min(newLeft, layoutArea.offsetWidth - element.offsetWidth))}px`;
         }
 
-        function closeDragElement(e) {
-            document.onmousemove = null;
+        function closeDragElement() {
             document.onmouseup = null;
-
-            // Remove hover classes
-            sidebar.classList.remove('delete-hover');
-            element.classList.remove('delete-hover');
-
-            // Check if the table is dropped in the sidebar
-            const sidebarRect = sidebar.getBoundingClientRect();
-            if (e.clientX >= sidebarRect.left && e.clientX <= sidebarRect.right &&
-                e.clientY >= sidebarRect.top && e.clientY <= sidebarRect.bottom) {
-                element.remove(); // Delete the table
-            } else if (e.clientX >= layoutArea.offsetLeft && 
-                       e.clientX <= layoutArea.offsetLeft + layoutArea.offsetWidth &&
-                       e.clientY >= layoutArea.offsetTop && 
-                       e.clientY <= layoutArea.offsetTop + layoutArea.offsetHeight) {
-                // If dropped within layout area, adjust position relative to layout area
-                element.style.left = `${e.clientX - layoutArea.offsetLeft - offsetX}px`;
-                element.style.top = `${e.clientY - layoutArea.offsetTop - offsetY}px`;
-            } else {
-                // If dropped outside layout area and sidebar, return to original position
-                element.style.left = `${rect.left - layoutArea.offsetLeft}px`;
-                element.style.top = `${rect.top - layoutArea.offsetTop}px`;
-            }
+            document.onmousemove = null;
         }
     }
 
@@ -197,21 +190,24 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
         const deleteButton = document.createElement('button');
         deleteButton.textContent = 'Delete';
-        deleteButton.onclick = () => {
+        deleteButton.onclick = (e) => {
+            e.stopPropagation();
             table.remove();
             contextMenu.remove();
         };
 
         const occupiedButton = document.createElement('button');
         occupiedButton.textContent = table.classList.contains('occupied') ? 'Mark as Unoccupied' : 'Mark as Occupied';
-        occupiedButton.onclick = () => {
+        occupiedButton.onclick = (e) => {
+            e.stopPropagation();
             table.classList.toggle('occupied');
             contextMenu.remove();
         };
 
         const orderButton = document.createElement('button');
         orderButton.textContent = 'Order';
-        orderButton.onclick = () => {
+        orderButton.onclick = (e) => {
+            e.stopPropagation();
             showOrderModal(table);
             contextMenu.remove();
         };
@@ -219,22 +215,20 @@ document.addEventListener('DOMContentLoaded', (event) => {
         contextMenu.appendChild(deleteButton);
         contextMenu.appendChild(occupiedButton);
         contextMenu.appendChild(orderButton);
+
+        // Prevent clicks on the menu from bubbling up
+        contextMenu.addEventListener('click', (e) => e.stopPropagation());
+
         document.body.appendChild(contextMenu);
     }
 
-    // Handle right-click on tables
-    layoutArea.addEventListener('contextmenu', (e) => {
-        const tableElement = e.target.closest('.table-icon');
-        if (tableElement && tableElement.parentElement === layoutArea) {
-            e.preventDefault();
-            createContextMenu(e.clientX, e.clientY, tableElement);
-        }
-    });
-
     // Close context menu when clicking outside
     document.addEventListener('click', (e) => {
-        if (contextMenu && !contextMenu.contains(e.target)) {
-            contextMenu.remove();
+        if (!e.target.closest('.context-menu') && !e.target.closest('.ellipsis-menu')) {
+            const existingMenu = document.querySelector('.context-menu');
+            if (existingMenu) {
+                existingMenu.remove();
+            }
         }
     });
 
@@ -502,11 +496,26 @@ document.addEventListener('DOMContentLoaded', (event) => {
         displayOrderItems(table, orderModal);
     }
 
-    // Make sure this event listener is inside the DOMContentLoaded event
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('ellipsis-menu')) {
+            e.preventDefault();
+            e.stopPropagation();
+            const tableElement = e.target.closest('.table-icon');
+            const rect = e.target.getBoundingClientRect();
+            createContextMenu(rect.right, rect.top, tableElement);
+        } else if (!e.target.closest('.context-menu')) {
+            const existingMenu = document.querySelector('.context-menu');
+            if (existingMenu) {
+                existingMenu.remove();
+            }
+        }
+    });
+
     layoutArea.addEventListener('contextmenu', (e) => {
         const tableElement = e.target.closest('.table-icon');
         if (tableElement && tableElement.parentElement === layoutArea) {
             e.preventDefault();
+            const rect = tableElement.getBoundingClientRect();
             createContextMenu(e.clientX, e.clientY, tableElement);
         }
     });
